@@ -7,7 +7,7 @@ const CACHE_ELEMENTS = [
     "./components/Contador.js"
 ]
 
-const CACHE_NAME = "v2_cache_contador_react";
+const CACHE_NAME = "v3_cache_contador_react";
 
 self.addEventListener("install", (e) => {
  e.waitUntil(
@@ -26,8 +26,25 @@ self.addEventListener("activate", (e) => {
 
     e.waitUntil(
         caches.keys().then(cacheNames => {
-            console.log(cacheNames);
-        })
-   
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    return (
+                        cacheWhitelist.indexOf(cacheName) === -1 && caches.delete(cacheName)
+                    );
+                })  
+            );
+        }).then(() => self.clients.claim())
     );
-   });
+});
+
+self.addEventListener("fetch", (e) => {
+    e.respondWith(() => {
+        caches.match(e.request).then(res => {
+            if(res){
+                return res;
+            }
+
+            return fetch(e.request);
+        }
+    });
+});
